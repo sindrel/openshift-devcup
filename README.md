@@ -9,6 +9,8 @@ It is ment for semi-persistent development use. It's got persistent storage, a w
 ## Usage
 (as root, on the server you wish to deploy it to)
 
+```yum -y install git```
+
 ```git clone https://github.com/sindrel/openshift-devcup.git```
 
 ```sh openshift-devcup/install-os-devcup.sh <optional_cluster_name>```
