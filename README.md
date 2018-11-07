@@ -23,7 +23,7 @@ If you intend to deploy this to an existing server, please revise the script bef
 After running the script you should have a working installation of OpenShift OKD:
 
 - *Web console* exposed on https://name.ipaddress.nip.io:8443/console (i.e. https://example.192.168.1.10.nip.io:8443/console).
-- *Docker-registry* exposed on https://docker-registry.name.ipaddress.nip.io (i.e. docker-registry.example.192.168.1.10.nip.io).
+- *Docker-registry* exposed on https://docker-registry.name.ipaddress.nip.io (i.e. docker-registry.example.192.168.1.10.nip.io). (See the troubleshooting section below)
 
 ## What it does
 
@@ -36,5 +36,9 @@ After running the script you should have a working installation of OpenShift OKD
 - Configures automatic start on boot
 
 ## Troubleshooting
+### Web console redirects to 127.0.0.1
 If you try to access the web console on https://name.ipaddress.nip.io:8443/ but you're redirected to 127.0.0.1 (localhost), it's due to a bug in OpenShift. 
 If you use the full path https://name.ipaddress.nip.io:8443/console it should work without issues.
+
+### Docker registry issues
+There seems to be some issues with proxying of the Docker registry. If you're unable to reach it from the external route, try using the internal route (172.30.1.1:5000). If you know how to solve this, let me know.
