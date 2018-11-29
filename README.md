@@ -1,5 +1,5 @@
 # OpenShift OKD all-in-one installation (devcup)
-Works on CentOS 7 + OpenShift OKD 3.11
+Works on CentOS 7 + OpenShift OKD 3.9/3.11
 
 ## What's this?
 Devcup is a script that provides you with a fully working installation of OpenShift on one server. It sets up firewall rules, installs dependencies, and deploys an installation of OpenShift OKD using the "oc cluster up" method. 
@@ -13,7 +13,11 @@ It is ment for semi-persistent development use. It's got persistent storage, a w
 
 ```git clone https://github.com/sindrel/openshift-devcup.git```
 
-```sh openshift-devcup/install-os-devcup.sh <optional_cluster_name>```
+```sh openshift-devcup/install-os-devcup.sh <version> <cluster_name>```
+
+Valid versions are: 3.9, 3.11.
+
+If you do not wish to specify a cluster name, simply provide an empty string ('').
 
 ## Prerequisites
 Installation only requires a *clean installation* of CentOS 7.
@@ -22,8 +26,7 @@ If you intend to deploy this to an existing server, please revise the script bef
 ## What you get
 After running the script you should have a working installation of OpenShift OKD:
 
-- *Web console* exposed on https://name.ipaddress.nip.io:8443/console (i.e. https://example.192.168.1.10.nip.io:8443/console).
-- *Docker-registry* exposed on https://docker-registry.name.ipaddress.nip.io (i.e. docker-registry.example.192.168.1.10.nip.io). (See the troubleshooting section below)
+- *Web console* exposed on https://name.ipaddress.nip.io:8443/console (i.e. https://example.192.168.1.10.nip.io:8443/console). (See the troubleshooting section below)
 
 ## What it does
 
@@ -32,7 +35,6 @@ After running the script you should have a working installation of OpenShift OKD
 - Installs the OC command line tool
 - Runs the "oc console up" installation
 - Gives the 'admin' user cluster-admin privileges
-- Creates a docker registry route
 - Configures automatic start on boot
 
 ## Troubleshooting
