@@ -8,22 +8,49 @@
 #
 #####################################################
 
-echo "Starting installation"
-
 DIR="/srv/openshift"
+GITHUB_URL="https://github.com/openshift/origin/releases/download"
+VERSION=$1
+
+if [ "$#" -ne 2 ]; then
+    echo "Argument missing - please specify version and name"
+    exit 1
+fi
+
+echo "Installing OpenShift $VERSION..."
 
 IP=$(ip route get 1 | awk '{print $NF;exit}')
 echo "! IP address: $IP"
 
-if [ ! -z $1 ] 
+if [ ! -z $2 ] 
 then 
     : # Name provided
-    OS_HOSTNAME="$1.$IP.nip.io"
+    OS_HOSTNAME="$2.$IP.nip.io"
 else
     : # Name not provided
     OS_HOSTNAME="$IP.nip.io"
 fi
 echo "! Hostname set to $OS_HOSTNAME"
+
+if [ "$VERSION" == "3.9" ]; then
+    OC_VERSION="v3.9.0"
+    OC_FILE="openshift-origin-client-tools-v3.9.0-191fece-linux-64bit"
+    OC_STARTUP="oc cluster up --public-hostname=$OS_HOSTNAME --routing-suffix=$OS_HOSTNAME --host-data-dir=$DIR/data --host-config-dir=$DIR/config --host-pv-dir=$DIR/pv --host-volumes-dir=$DIR/volumes"
+elif [ "$VERSION" == "3.10" ]; then
+    echo "Untested!"
+    exit 1
+    #OC_VERSION="v3.10.0"
+    #OC_FILE="openshift-origin-client-tools-v3.10.0-rc.0-c20e215-linux-64bit"
+    #OC_STARTUP="oc cluster up --public-hostname=$OS_HOSTNAME --routing-suffix=$OS_HOSTNAME --base-dir=$DIR" 
+elif [ "$VERSION" == "3.11" ]; then
+    OC_VERSION="v3.11.0"
+    OC_FILE="openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit"
+    OC_STARTUP="oc cluster up --public-hostname=$OS_HOSTNAME --routing-suffix=$OS_HOSTNAME --base-dir=$DIR"
+else 
+    echo "! Version $VERSION unknown"
+    echo "Stopped"
+    exit 1
+fi
 
 echo "* Preparing runtime environment..."
 mkdir $DIR && cd $DIR
@@ -52,27 +79,24 @@ firewall-cmd --permanent --zone public --add-port 443/tcp
 firewall-cmd --reload
 
 echo "* Installing OC..."
-wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
-tar -xvzf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
-cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc /usr/sbin/
-cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/kubectl /usr/sbin/
+wget $GITHUB_URL/$OC_VERSION/$OC_FILE.tar.gz
+tar -xvzf $OC_FILE.tar.gz
+cp $OC_FILE/oc /usr/sbin/
+cp $OC_FILE/kubectl /usr/sbin/
 rm -rf openshift-origin-client-tools*
 
-echo "{\"kind\": \"Route\",\"apiVersion\": \"v1\",\"metadata\": {\"name\": \"docker-registry.$OS_HOSTNAME\"},\"spec\": {\"host\": \"docker-registry.$OS_HOSTNAME\",\"to\": {\"kind\": \"Service\",\"name\": \"docker-registry\"},\"tls\": {\"termination\": \"edge\"}}}" > $DIR/registry-route.json
-
 echo "* Running initial cluster setup..."
-oc cluster up --public-hostname=$OS_HOSTNAME --routing-suffix=$OS_HOSTNAME --base-dir=$DIR
+$OC_STARTUP
 oc login -u system:admin
 oc adm policy add-cluster-role-to-user cluster-admin admin
 oc project default
-oc create -f $DIR/registry-route.json
 oc project myproject
 
 echo "* Configuring autostart..."
 startscr="$DIR/os-devcup-up.sh"
 stopscr="$DIR/os-devcup-down.sh"
 echo cd $DIR > $startscr
-echo "/usr/sbin/oc cluster up --public-hostname=$OS_HOSTNAME --routing-suffix=$OS_HOSTNAME --base-dir=$DIR" >> $startscr
+echo "$OC_STARTUP" >> $startscr
 echo "/usr/sbin/oc cluster down" > $stopscr
 chmod +x $startscr
 chmod +x $stopscr
@@ -82,6 +106,4 @@ echo ""
 echo "Done!"
 echo ""
 echo "    You should now be able to access the web console on https://$OS_HOSTNAME:8443/console"
-echo ""
-echo "    The Docker registry should be exposed on docker-registry.$OS_HOSTNAME (remember to add this to the insecure-registries list on your Docker client)"
 echo ""
